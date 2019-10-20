@@ -44,8 +44,6 @@ def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, 
     pos_prev = np.array([current_x, current_y, current_th])
     ang_mat = np.array([[np.cos(current_th)[0],0],[np.sin(current_th)[0], 0], [0,1]])
     control = np.array([trans_speed, rot_speed])
-    print(pos_prev.shape, ang_mat.shape, control.shape)
-    print(type(ang_mat))
     new_pos =  pos_prev + time * ang_mat @ control
     return new_pos
     
@@ -53,7 +51,7 @@ def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, 
 
 # main 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
-number_of_steps = 800 
+number_of_steps = 12609 
 fig = plt.figure(figsize=(10,5))
 plt.scatter(landmark_true_pos[:,0], landmark_true_pos[:,1], color = 'r', marker='x')
 plt.plot(robot_true_x[0:number_of_steps], robot_true_y[0:number_of_steps])
