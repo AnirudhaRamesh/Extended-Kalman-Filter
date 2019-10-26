@@ -97,6 +97,7 @@ def h(pos, r_l):
     return 34*1
     take r_l as all the landmarks
     """
+    return
 
 
 
@@ -119,13 +120,20 @@ def ekf(prev_pos, prev_cov, control, obs, d, Rt):
 # main 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
 number_of_steps = 3
-Rt = np.diag(robot_trans_speed_var,robot_trans_speed_var, robot_rot_speed_var)
+Rt = np.diag([robot_trans_speed_var[0][0],robot_trans_speed_var[0][0], robot_rot_speed_var[0][0]])
+Qt = np.zeros((34,34))
+for i in range(34):
+    if i%2==0:
+        Qt[i][i] = landmark_estimated_range_var
+    else:
+        Qt[i][i] = landmark_estimated_bearing_var
+
 #fig = plt.figure(figsize=(10,5))
 #plt.scatter(landmark_true_pos[:,0], landmark_true_pos[:,1], color = 'r', marker='x')
 #plt.plot(robot_true_x[0:number_of_steps], robot_true_y[0:number_of_steps])
 
 new_pos = []
-new_pos.append([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
+new_pos.append([robot_true_x[0][0], robot_true_y[0][0], robot_true_th[0]])
 for i in range(1,number_of_steps):
     temp = calc_new_position(new_pos[i-1][0],new_pos[i-1][1],new_pos[i-1][2],robot_trans_speed[i-1], robot_rot_speed[i-1],0.1)
     jac = ret_motion_jacobian(new_pos[i-1][2],robot_trans_speed[i-1])
