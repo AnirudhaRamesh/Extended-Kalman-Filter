@@ -47,8 +47,29 @@ def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, 
     new_pos =  pos_prev + time * ang_mat @ control
     return new_pos
     
-def ret_sensor_jacobian():
-	return
+def ret_sensor_jacobian_l(x_t, r_l, d):
+    """
+    calculates jacobian for lth landmark
+    at timestep t
+    Arguments: d, current belief, and landmark position
+    return 2*3 jacobian
+    """
+    x_k = x_t[0]
+    y_k = x_t[1]
+    theta_k = x_t[2]
+    x_l = r_l[0]
+    y_l = r_l[1]
+    a = x_l-x_k-d*np.cos(theta_k)
+    b = y_l - y_k - d*np.sin(theta_k)
+    t = np.sqrt(a*a + b*b)
+    j_00 = -1 * a / t
+    j_01 = -1 * b / t
+    j_02 = (1/t) * (a*d*np.sin(theta_k) - b*d*np.cos(theta_k))
+    j_10 = b/(t*t)
+    j_11 = -a/(t*t)
+    j_12 = d * (a * np.cos(theta_k) + b*np.sin(theta_k))/(t*t) 
+    jacob = np.array([[j_00,j_01,j_02],[j_10,j_11,j_12]])
+    return jacob
 
 def ret_motion_jacobian(prev_th, trans_speed):
     """ Motion Jacobian only dependant on trans_speed and prev_th, 
@@ -71,17 +92,17 @@ def ret_motion_jacobian(prev_th, trans_speed):
 # function g  == calc_new_pos ? Afaik it's this, you can just sub existing function here.
 # function h we have to write 
     
-def ekf(prev_pos, prev_cov, control, obs):
+def ekf(prev_pos, prev_cov, control, obs, d):
     """ Takes prev position, prev_cov, current control ,and current obs """
     G = ret_motion_jacobian(prev_th=prev_pos[2],trans_speed=control[0])
-    H = ret_sensor_jacobian()
+    H = ret_sensor_jacobian(d)
     
     pos_current_dash = g(current_control,prev_pos)
     current_cov_dash = G@prev_cov@G.T 
     
     kalman_gain = current_cov_dash@H.T@np.linalg.inv(H@current_cov_dash@H.T)
     pos_current = pos_current_dash + kalman_gain(obs - h(pos_current_dash))
-    cov_current = (np.eye(3) - kalman_gain@H)current_cov_dash
+    cov_current = (np.eye(3) - kalman_gain@H)@current_cov_dash
     
     return pos_current, cov_current
 # main 
