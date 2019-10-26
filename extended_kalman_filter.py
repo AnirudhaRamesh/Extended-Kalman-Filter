@@ -9,10 +9,13 @@ def read_data(filename) :
     # meters
     robot_true_x = dataset['x_true']
     robot_true_x.shape = (12609)
+
     robot_true_y = dataset['y_true']
     robot_true_y.shape = (12609)
+
     robot_true_th = dataset['th_true']
     robot_true_th.shape = (12609)
+
     landmark_true_pos = dataset['l']
     landmark_estimated_range = dataset['r']
     # meter^2
@@ -40,7 +43,7 @@ def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, 
     """ Calculates new position of robot using motion model given :
         current_x : _ meters 
         current_y : _ meters
-        current_th : _ rad
+        current_th : _ radlandmark_estimated_range
         trans_speed : _ meters/second 
         rot_speed : _ rad/second 
         time : _ seconds
@@ -76,6 +79,24 @@ def ret_sensor_jacobian_l(x_t, r_l, d):
     jacob = np.array([[j_00,j_01,j_02],[j_10,j_11,j_12]])
     return jacob
 
+
+def observation_model(pos, landmark_true_pos, d):
+    """
+    return 34*1
+    take landmark_true_pos as all the landmarks
+    """
+    output = np.zeros((34,1))
+    for i in range(landmark_true_pos.shape[0]) :
+        output[2*i] = np.sqrt((landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2]))**2 + (landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]))**2)
+        output[2*i+1] = atan2(landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]),landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2])) - pos[2]
+    
+    return output
+
+def ret_sensor_jacobian(x_t, landmark_estimated_range_t, landmark_estimated_bearing_t, d):
+    for i in range()
+
+
+
 def ret_motion_jacobian(prev_th, trans_speed):
     """ Motion Jacobian only dependant on trans_speed and prev_th, 
     trans_speed : _ meters/second
@@ -100,14 +121,14 @@ def ret_motion_jacobian(prev_th, trans_speed):
 def h(pos, r_l):
     """
     return 34*1
-    take r_l as all the landmarks
+    take r_l as all the landmarks(17*2)
     """
     return
 
 
 
 
-def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt):
+def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks):
     """ Takes prev position, prev_cov, current control ,and current obs """
     G = ret_motion_jacobian(prev_th=prev_pos[2],trans_speed=control[0])
     H = ret_sensor_jacobian(d)
@@ -123,6 +144,9 @@ def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt):
     
     return pos_current, cov_current
 # main 
+
+
+
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
 number_of_steps = 2
 Rt = np.diag([robot_trans_speed_var,robot_trans_speed_var, robot_rot_speed_var])
