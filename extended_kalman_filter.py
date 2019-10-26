@@ -64,7 +64,7 @@ def observation_model(pos, landmark_true_pos, d):
     output = np.zeros((34,1))
     for i in range(landmark_true_pos.shape[0]) :
         output[2*i] = np.sqrt((landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2]))**2 + (landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]))**2)
-        output[2*i+1] = atan2(landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]),landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2])) - pos[2]
+        output[2*i+1] = np.arctan2(landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]),landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2])) - pos[2]
     
     return output
 
@@ -130,7 +130,7 @@ def ret_motion_jacobian(prev_th, trans_speed):
 # function h we have to write 
     
 
-def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks):
+def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks, time):
     """ Takes prev position, prev_cov, current control ,and current obs """
     G = ret_motion_jacobian(prev_th=prev_pos[2],trans_speed=control[0])
     x_l = landmarks[:,0]
@@ -154,7 +154,7 @@ def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks):
 
 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
-number_of_steps = 2
+number_of_steps = 4
 Rt = np.diag([robot_trans_speed_var,robot_trans_speed_var, robot_rot_speed_var])
 Qt = np.zeros((34,34))
 for i in range(34):
@@ -168,19 +168,37 @@ for i in range(34):
 #plt.plot(robot_true_x[0:number_of_steps], robot_true_y[0:number_of_steps])
 
 new_pos = []
+test_pos = []
+
 new_pos.append([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
+test_pos.append([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
+cov_cur = np.diag([1,1,0.1])
+
+def ret_obs(landmark_estimated_range, landmark_estimated_bearing):
+    obs = np.zeros(34)
+    for i in range(17):
+        obs[2*i] = landmark_estimated_range[i]
+        obs[2*i+1] = landmark_estimated_bearing[i]
+    return obs
+
+
+time = 0.1
 for i in range(1,number_of_steps):
-    temp = calc_new_position(new_pos[i-1][0],new_pos[i-1][1],new_pos[i-1][2],robot_trans_speed[i-1], robot_rot_speed[i-1],0.1)
-    jac = ret_motion_jacobian(new_pos[i-1][2],robot_trans_speed[i-1])
-    print(jac)
+    temp = calc_new_position(new_pos[i-1][0],new_pos[i-1][1],new_pos[i-1][2],robot_trans_speed[i-1], robot_rot_speed[i-1],time)
+    # jac = ret_motion_jacobian(new_pos[i-1][2],robot_trans_speed[i-1])
     new_pos.append(temp)
 
+    temp = cov_cur = ekf(test_pos[i-1], cov_cur, np.array([robot_trans_speed[i-1], robot_rot_speed[i-1]]), ret_obs(landmark_estimated_range[i],landmark_estimated_bearing[i]), d, Rt, Qt, landmark_true_pos, time)
+    test_pos.append(temp)
+
+
 new_pos = np.array(new_pos)
+test_pos = np.array(test_pos)
 
-x_t = np.array([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
-x_l = landmark_true_pos[:,0]
-y_l = landmark_true_pos[:,1]
+# x_t = np.array([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
+# x_l = landmark_true_pos[:,0]
+# y_l = landmark_true_pos[:,1]
 
-big_jacob = ret_sensor_jacobian(x_t, x_l, y_l, d)
+# big_jacob = ret_sensor_jacobian(x_t, x_l, y_l, d)
 
-#plt.plot(new_pos[:,0], new_pos[:,1], 'r')
+plt.plot(test_pos[:,0], test_pos[:,1], 'r')
