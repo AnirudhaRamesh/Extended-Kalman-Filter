@@ -50,25 +50,36 @@ def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, 
 def ret_sensor_jacobian():
 	return
 
-def ret_motion_jacobian(u_t, x_t_1, var):
-	"""
-	Takes control, previous position, and variance
-	change accordingly
-	"""
-	return
+def ret_motion_jacobian(prev_th, trans_speed):
+    """ Motion Jacobian only dependant on trans_speed and prev_th, 
+    trans_speed : _ meters/second
+    prev_th : _ rad
+    """
+    
+    motion_jacobian = np.zeros((3,3))
+    I = np.eye(3)
+    term_2 = np.zeros((3,3))
+    term_2[0,2] = -trans_speed * np.sin(prev_th)
+    term_2[1,2] = trans_speed * np.cos(prev_th)
+    dt = 0.1
+    motion_jacobian = I + dt * term_2
+    
+    return motion_jacobian
 
 # main 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
-number_of_steps = 12609 
-fig = plt.figure(figsize=(10,5))
-plt.scatter(landmark_true_pos[:,0], landmark_true_pos[:,1], color = 'r', marker='x')
-plt.plot(robot_true_x[0:number_of_steps], robot_true_y[0:number_of_steps])
+number_of_steps = 3
+#fig = plt.figure(figsize=(10,5))
+#plt.scatter(landmark_true_pos[:,0], landmark_true_pos[:,1], color = 'r', marker='x')
+#plt.plot(robot_true_x[0:number_of_steps], robot_true_y[0:number_of_steps])
 
 new_pos = []
 new_pos.append([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
 for i in range(1,number_of_steps):
     temp = calc_new_position(new_pos[i-1][0],new_pos[i-1][1],new_pos[i-1][2],robot_trans_speed[i-1], robot_rot_speed[i-1],0.1)
+    jac = ret_motion_jacobian(new_pos[i-1][2],robot_trans_speed[i-1])
+    print(jac)
     new_pos.append(temp)
 
 new_pos = np.array(new_pos)
-plt.plot(new_pos[:,0], new_pos[:,1], 'r')
+#plt.plot(new_pos[:,0], new_pos[:,1], 'r')
