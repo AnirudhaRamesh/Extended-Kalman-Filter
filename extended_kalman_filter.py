@@ -66,6 +66,24 @@ def ret_motion_jacobian(prev_th, trans_speed):
     
     return motion_jacobian
 
+
+# !!!!!!!! Aryan read below
+# function g  == calc_new_pos ? Afaik it's this, you can just sub existing function here.
+# function h we have to write 
+    
+def ekf(prev_pos, prev_cov, control, obs):
+    """ Takes prev position, prev_cov, current control ,and current obs """
+    G = ret_motion_jacobian(prev_th=prev_pos[2],trans_speed=control[0])
+    H = ret_sensor_jacobian()
+    
+    pos_current_dash = g(current_control,prev_pos)
+    current_cov_dash = G@prev_cov@G.T 
+    
+    kalman_gain = current_cov_dash@H.T@np.linalg.inv(H@current_cov_dash@H.T)
+    pos_current = pos_current_dash + kalman_gain(obs - h(pos_current_dash))
+    cov_current = (np.eye(3) - kalman_gain@H)current_cov_dash
+    
+    return pos_current, cov_current
 # main 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
 number_of_steps = 3
