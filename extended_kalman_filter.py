@@ -54,6 +54,20 @@ def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, 
     control = np.array([trans_speed, rot_speed])
     new_pos =  pos_prev + time * ang_mat @ control
     return new_pos
+
+
+def observation_model(pos, landmark_true_pos, d):
+    """
+    return 34*1
+    take landmark_true_pos as all the landmarks
+    """
+    output = np.zeros((34,1))
+    for i in range(landmark_true_pos.shape[0]) :
+        output[2*i] = np.sqrt((landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2]))**2 + (landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]))**2)
+        output[2*i+1] = atan2(landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]),landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2])) - pos[2]
+    
+    return output
+
     
 def ret_sensor_jacobian_l(x_t, r_l, d):
     """
@@ -80,20 +94,23 @@ def ret_sensor_jacobian_l(x_t, r_l, d):
     return jacob
 
 
-def observation_model(pos, landmark_true_pos, d):
-    """
-    return 34*1
-    take landmark_true_pos as all the landmarks
-    """
-    output = np.zeros((34,1))
-    for i in range(landmark_true_pos.shape[0]) :
-        output[2*i] = np.sqrt((landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2]))**2 + (landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]))**2)
-        output[2*i+1] = atan2(landmark_true_pos[i,1]-pos[1]-d*np.sin(pos[2]),landmark_true_pos[i,0]-pos[0]-d*np.cos(pos[2])) - pos[2]
-    
-    return output
-
 def ret_sensor_jacobian(x_t, landmark_estimated_range_t, landmark_estimated_bearing_t, d):
-    for i in range()
+    for i in range(17):
+        r_l = np.array([landmark_estimated_range_t[i], landmark_estimated_bearing_t[i]])
+        if r_l[0] == 0 and r_l[1] == 0:
+            if i == 0:
+                big_jacob = np.zeros((2,3))
+            else:
+                big_jacob = np.concatenate((big_jacob,np.zeros((2,3))), axis = 0)
+        else:
+            if i == 0:
+                big_jacob = np.zeros((2,3))
+            else:
+                H = ret_sensor_jacobian_l(x_t, r_l, d)
+                big_jacob = np.concatenate((big_jacob, H), axis = 0)
+    return big_jacob
+
+
 
 
 
@@ -118,15 +135,6 @@ def ret_motion_jacobian(prev_th, trans_speed):
 # function g  == calc_new_pos ? Afaik it's this, you can just sub existing function here.
 # function h we have to write 
     
-def h(pos, r_l):
-    """
-    return 34*1
-    take r_l as all the landmarks(17*2)
-    """
-    return
-
-
-
 
 def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks):
     """ Takes prev position, prev_cov, current control ,and current obs """
@@ -170,4 +178,9 @@ for i in range(1,number_of_steps):
     new_pos.append(temp)
 
 new_pos = np.array(new_pos)
+
+x_t = np.array([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
+landmark_estimated_range_t = landmark_estimated_range[0]
+landmark_estimated_bearing_t = landmark_estimated_bearing[0]
+
 #plt.plot(new_pos[:,0], new_pos[:,1], 'r')
