@@ -47,7 +47,15 @@ def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, 
     new_pos =  pos_prev + time * ang_mat @ control
     return new_pos
     
+def ret_sensor_jacobian():
+	return
 
+def ret_motion_jacobian(u_t, x_t_1, var):
+	"""
+	Takes control, previous position, and variance
+	change accordingly
+	"""
+	return
 
 # main 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
