@@ -155,7 +155,7 @@ def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks, time):
 
 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
-number_of_steps = 250
+number_of_steps = 100
 Rt = np.diag([robot_trans_speed_var,robot_trans_speed_var, robot_rot_speed_var])
 Qt = np.zeros((34,34))
 for i in range(34):
