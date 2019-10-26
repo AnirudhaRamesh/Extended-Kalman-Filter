@@ -93,7 +93,11 @@ def ret_motion_jacobian(prev_th, trans_speed):
 # function h we have to write 
     
 def h(pos, r_l):
-    
+    """
+    return 34*1
+    take r_l as all the landmarks
+    """
+
 
 
 
