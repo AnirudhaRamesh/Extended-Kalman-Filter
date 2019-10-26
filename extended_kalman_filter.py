@@ -89,25 +89,20 @@ def ret_sensor_jacobian_l(x_t, r_l, d):
     j_02 = (1/t) * (a*d*np.sin(theta_k) - b*d*np.cos(theta_k))
     j_10 = b/(t*t)
     j_11 = -a/(t*t)
-    j_12 = d * (a * np.cos(theta_k) + b*np.sin(theta_k))/(t*t) 
+    j_12 = -d * (a * np.cos(theta_k) + b*np.sin(theta_k))/(t*t) - 1 
     jacob = np.array([[j_00,j_01,j_02],[j_10,j_11,j_12]])
     return jacob
 
 
-def ret_sensor_jacobian(x_t, landmark_estimated_range_t, landmark_estimated_bearing_t, d):
+def ret_sensor_jacobian(x_t, x_l, y_l, d):
     for i in range(17):
-        r_l = np.array([landmark_estimated_range_t[i], landmark_estimated_bearing_t[i]])
-        if r_l[0] == 0 and r_l[1] == 0:
-            if i == 0:
-                big_jacob = np.zeros((2,3))
-            else:
-                big_jacob = np.concatenate((big_jacob,np.zeros((2,3))), axis = 0)
+        r_l = np.array([x_l[i], y_l[i]])
+    
+        if i == 0:
+            big_jacob = ret_sensor_jacobian_l(x_t, r_l, d)
         else:
-            if i == 0:
-                big_jacob = np.zeros((2,3))
-            else:
-                H = ret_sensor_jacobian_l(x_t, r_l, d)
-                big_jacob = np.concatenate((big_jacob, H), axis = 0)
+            H = ret_sensor_jacobian_l(x_t, r_l, d)
+            big_jacob = np.concatenate((big_jacob, H), axis = 0)
     return big_jacob
 
 
@@ -119,7 +114,6 @@ def ret_motion_jacobian(prev_th, trans_speed):
     trans_speed : _ meters/second
     prev_th : _ rad
     """
-    
     motion_jacobian = np.zeros((3,3))
     I = np.eye(3)
     term_2 = np.zeros((3,3))
@@ -139,15 +133,19 @@ def ret_motion_jacobian(prev_th, trans_speed):
 def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks):
     """ Takes prev position, prev_cov, current control ,and current obs """
     G = ret_motion_jacobian(prev_th=prev_pos[2],trans_speed=control[0])
-    H = ret_sensor_jacobian(d)
-
+    x_l = landmarks[:,0]
+    y_l = landmarks[:,1]
+    H = ret_sensor_jacobian(prev_pos, x_l, y_l, d)
     pos_current_dash = calc_new_position(prev_pos[0], prev_pos[1], prev_pos[2], control[0], control[1], time)
-
     # pos_current_dash = calc_new_pos(current_control,prev_pos)
     current_cov_dash = G@prev_cov@G.T + Rt
-    
     kalman_gain = current_cov_dash@H.T@np.linalg.inv(H@current_cov_dash@H.T + Qt)
-    pos_current = pos_current_dash + kalman_gain@(obs - h(pos_current_dash))
+    """
+    replacing h here
+    """
+    h = observation_model(pos_current_dash, landmarks, d)
+    # pos_current = pos_current_dash + kalman_gain@(obs - h(pos_current_dash))
+    pos_current = pos_current_dash + kalman_gain@(obs - h)
     cov_current = (np.eye(3) - kalman_gain@H)@current_cov_dash
     
     return pos_current, cov_current
@@ -180,7 +178,9 @@ for i in range(1,number_of_steps):
 new_pos = np.array(new_pos)
 
 x_t = np.array([robot_true_x[0], robot_true_y[0], robot_true_th[0]])
-landmark_estimated_range_t = landmark_estimated_range[0]
-landmark_estimated_bearing_t = landmark_estimated_bearing[0]
+x_l = landmark_true_pos[:,0]
+y_l = landmark_true_pos[:,1]
+
+big_jacob = ret_sensor_jacobian(x_t, x_l, y_l, d)
 
 #plt.plot(new_pos[:,0], new_pos[:,1], 'r')
