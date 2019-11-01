@@ -39,6 +39,8 @@ def read_data(filename) :
 
     return timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d 
 
+#g(t)
+
 def calc_new_position(current_x, current_y, current_th, trans_speed, rot_speed, time) :
     """ Calculates new position of robot using motion model given :
         current_x : _ meters 
@@ -60,6 +62,7 @@ def observation_model(pos, landmark_true_pos, d):
     """
     return 34*1
     take landmark_true_pos as all the landmarks
+    landmark_true_pos = 17*2
     """
     output = np.zeros((34,1))
     for i in range(landmark_true_pos.shape[0]) :
@@ -155,9 +158,10 @@ def ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks, time):
 
 
 timestamps, robot_true_x, robot_true_y, robot_true_th, landmark_true_pos, landmark_estimated_range, landmark_estimated_range_var, landmark_estimated_bearing, landmark_estimated_bearing_var, robot_trans_speed, robot_trans_speed_var, robot_rot_speed, robot_rot_speed_var, d = read_data('dataset.npz')
-number_of_steps = 250
+
 Rt = np.diag([robot_trans_speed_var,robot_trans_speed_var, robot_rot_speed_var])
 Qt = np.zeros((34,34))
+
 for i in range(34):
     if i%2==0:
         Qt[i][i] = landmark_estimated_range_var
@@ -184,6 +188,7 @@ def ret_obs(landmark_estimated_range, landmark_estimated_bearing):
 
 
 time = 0.1
+number_of_steps = 2
 for i in range(1,number_of_steps):
     temp = calc_new_position(new_pos[i-1][0],new_pos[i-1][1],new_pos[i-1][2],robot_trans_speed[i-1], robot_rot_speed[i-1],time)
     # jac = ret_motion_jacobian(new_pos[i-1][2],robot_trans_speed[i-1])
