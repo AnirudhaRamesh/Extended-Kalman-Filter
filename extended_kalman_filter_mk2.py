@@ -193,6 +193,8 @@ def ekf_predicted(X_init, r, b, u, l, d, Rt, Qt, steps):
     x_pred = []
     x_pred.append(X_init)
     prev_cov = np.diag([1,1,0.1])
+    cov_list = []
+    cov_list.append(prev_cov)
     for i in range(1, steps):
         prev_pos = x_pred[i-1]
         control = u[i]
@@ -202,19 +204,20 @@ def ekf_predicted(X_init, r, b, u, l, d, Rt, Qt, steps):
         landmarks = l
         prev_pos, prev_cov = ekf(prev_pos, prev_cov, control, obs, d, Rt, Qt, landmarks)
         x_pred.append(prev_pos)
+        cov_list.append(prev_cov)
     
-    return np.array(x_pred)
+    return np.array(x_pred), np.array(cov_list)
 
 dataset = np.load('dataset.npz')
 Rt, Qt, X, l, r, b, u, d = return_data(dataset)
-steps = 2000
+steps = 12609
 X_init = X[0]
 
 
 x_motion = plot_motion_model(X_init, u, steps)
 
 
-x_pred = ekf_predicted(X_init, r, b, u, l, d, Rt, Qt, steps)
+x_pred, cov_pred = ekf_predicted(X_init, r, b, u, l, d, Rt, Qt, steps)
 #Plot using ONLY wheel odometry, ground truth and landmark locations
 
 a = x_motion[0:steps,0]
