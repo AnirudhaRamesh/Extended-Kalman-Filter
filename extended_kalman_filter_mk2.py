@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 
@@ -258,6 +259,53 @@ legend = ax.legend(loc='upper right', fontsize='x-large', fancybox=True, frameal
 plt.show()
 
 
+
+# from datetime import datetime
+# # from matplotlib import pyplot
+# from matplotlib.animation import FuncAnimation
+# from random import randrange
+
+# x_data, y_data = [], []
+
+# figure = plt.figure()
+# line, = plt.plot(x_pred[0,0], x_pred[0,1])
+
+# def update(frame):
+#     x_data.append(datetime.now())
+#     y_data.append(randrange(0, 100))
+#     line.set_data(x_data, y_data)
+#     figure.gca().relim()
+#     figure.gca().autoscale_view()
+#     return line,
+
+# animation = FuncAnimation(figure, update, interval=200)
+
+# pyplot.show()
+
+
+# plt.plot(x_pred[0:2000,0], x_pred[0:2000,1])
+# plt.show()
+
+from matplotlib.patches import Ellipse
+
+
+for i in range(1, 12609):
+	lambda_, v = np.linalg.eig(cov_pred[i][0:2,0:2])
+	lambda_ = np.sqrt(lambda_)
+	ax = plt.subplot(111, aspect='equal')
+	for j in range(3,4):
+	    ell = Ellipse(xy=(x_pred[i,0], x_pred[i,1]),
+	    			width=lambda_[0]*j*2, height=lambda_[1]*j*2, edgecolor='r',
+	      			angle=np.rad2deg(np.arccos(v[0, 0])))
+	    ell.set_facecolor('none')
+	    ax.add_artist(ell)
+	
+	plt.scatter(l[:,0], l[:,1], marker='x')
+	plt.plot(x_pred[0:i,0], x_pred[0:i,1])
+	plt.pause(0.0001)
+	plt.clf()
+
+plt.show()
 
 
 
