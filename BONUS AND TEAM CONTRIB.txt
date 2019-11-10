@@ -1,0 +1,10 @@
+Team contrib : 
+
+We believe we worked equaly. Anirudha worked mainly on motion model, motion Jacobian, EKF template. Aryan worked mostly on sensor jacobian, debugging and integration.
+
+
+Bonus : 
+
+Since video is large, drive link attached. 
+
+https://drive.google.com/open?id=1KDH2iI3pggRqxl-NEGRU53Uxlm3jjPr8
